@@ -1,0 +1,27 @@
+-we'll need a tokenizer that grabs atoms and parenthesis. an atom is either one of {or, and, not, tflipflop} or a label starting with a letter
+-the first line is a set of input variables, for each one we want to create an input structure with the appropriate variable name
+-the second line is the circuit specification. 
+    1. first we check the parenthesis match up, if not then error
+    2. then we pass it to our tokenizer, first token should be a left parenthesis.
+    3. we could construct the specification recursively. whenever we get an operation we call a function that sets up a struct for it. if it doesn't get the right number of arguments then error.
+    4. we start with void *r, which will be the output of the circuit. we set r = parse();
+
+-one way to handle labels:
+    1. label structure has pointer to its output.
+    2. we'll have to calculate it multiple times but I think we'd have to do that anyways
+    3. when we first come across an atom that isn't an operation(and, or, not, tflipflop), check if it's in the input vector. if not then check if it's a label, if not then create a label. 
+    4. if a label is first in a list(after a left parenthesis), then we should expect that it will set the output pointer. if not then we return error.
+    5.   
+
+-so now the basic process is:
+    1. set r to parse(line) if first token is leftp, otherwise to the input if it's an input, otherwise error
+ 
+parse is a recursive procedure called after a leftp:
+    1. if it's an operation, then we're going return a pointer to a malloc'd structure of the correct type
+        2. then we grab arguments until rightp is found.
+        3. while grabbing arguments:
+            -grab a token, if it's an atom check it against the inputs and the labels. if no match create a new label blah blah balh, set the input to the right pointer 
+            -if it's a leftp then set the input to a pointer returned from parse(line + i)
+        4. return pointer to the struct created
+    2. if it's a leftp then return parse(line + i)
+    3. if it's a non-operation atom then check if its a label, if it is then set it's output pointer to the result of the next argument 
