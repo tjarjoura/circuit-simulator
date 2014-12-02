@@ -12,8 +12,8 @@
 #define NOT_INPUT(p)       (((not *)p)->input)
 #define BINOP_INPUT_A(p)   (((binary_op *)p)->input_a)
 #define BINOP_INPUT_B(p)   (((binary_op *)p)->input_b)
-#define TFLIPFLOP_INPUT(p) (((binary_op *)p)->input_a)
-#define TFLIPFLOP_STATE(p) (((binary_op *)p)->former_state)
+#define TFLIPFLOP_INPUT(p) (((tflipflop *)p)->input_a)
+#define TFLIPFLOP_STATE(p) (((tflipflop *)p)->former_state)
 #define INPUT(p)           (((input *)p)->value)
 #define INPUT_LABEL(p)     (((input *)p)->label)
 #define LABEL_NAME(p)      (((label *)p)->label)
@@ -24,6 +24,9 @@
 #define TOKEN_ATOM   3
 
 int get_token(char *bufp, char *token_buf, int n, int *retpos);
+void *parse(char *bufp, int *retpos); 
+void free_element(void *elem);
+struct label *get_label(char *str);
 
 struct not {
     char type;

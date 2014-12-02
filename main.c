@@ -7,11 +7,51 @@
 struct input *input_vector;
 int n_inputs;
 
+struct label *labels;
+int n_labels; 
+
 void *output;
 char final_val; 
 
 char evaluate(void *circuit);
-void *parse(char *bufp);
+
+void free_element(void *elem)
+{
+    if ((TYPE(elem) == TYPE_INPUT) || (TYPE(elem) == TYPE_LABEL))
+        return;
+    
+    if ((TYPE(elem) == TYPE_NOT) || (TYPE(elem) == TYPE_TFLIPFLOP)) {
+        free_element(NOT_INPUT(elem));
+        free(elem);
+        return;
+    } 
+        
+    if ((TYPE(elem) == TYPE_OR) || (TYPE(elem) == TYPE_AND)) {
+        free_element(BINOP_INPUT_A(elem));
+        free_element(BINOP_INPUT_B(elem));
+        free(elem);
+        return;
+    }
+}
+
+void get_output(char *bufp)
+{
+    int rv, i = 0; 
+    char token_buf[20];
+
+    rv = get_token(bufp + i, token_buf, 20, &i);
+    switch (rv) {
+    case TOKEN_LEFTP:
+        output = parse(bufp + i, &i);
+        break;
+    case TOKEN_ATOM:
+        if ((output = get_input(token_buf)) != NULL)
+            break;
+    default:
+        fprintf(stderr, "get_output crash: invalid spec\n");
+        exit(-1);
+    }
+}
 
 void get_input_variables(char *bufp)
 {
@@ -43,6 +83,17 @@ void get_input_variables(char *bufp)
         if (in_word)
             input_vector[j].name[k++] = bufp[i]; 
     }
+}
+
+struct input *get_input(char *label)
+{
+    int i;
+
+    for (i = 0; i < n_inputs; i++)
+        if (strncmp(label, input_vector[i].label, 10) == 0)
+            return &input_vector[i];
+    
+    return NULL;
 }
 
 int main(int argc, char **argv)
