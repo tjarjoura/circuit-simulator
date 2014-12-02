@@ -51,6 +51,48 @@ void get_output(char *bufp)
         fprintf(stderr, "get_output crash: invalid spec\n");
         exit(-1);
     }
+
+    replace_labels(output);
+}
+
+/* TODO: RECURSE */
+void replace_labels(void *elem)
+{
+    switch(TYPE(elem)) {
+    case TYPE_NOT:
+    case TYPE_TFLIPFLOP:
+        while (TYPE(UN_INPUT(elem)) == TYPE_LABEL) {
+            if (LABEL_VALUE(UN_INPUT(elem)) == NULL) {
+                fprintf(stderr, "replace_labels crash: undefined label\n");
+                free_element(output);
+                exit(-1);
+            } 
+            UN_INPUT(elem) = LABEL_VALUE(UN_INPUT(elem)); 
+        }
+
+        replace_labels(UN_INPUT(elem));
+        return;
+    
+    case TYPE_OR:
+    case TYPE_AND:
+        while (TYPE(BINOP_INPUT_A(elem)) == TYPE_LABEL) {
+            if (LABEL_VALUE(BINOP_INPUT_A(elem)) == NULL) {
+                fprintf(stderr, "replace_labels crash: undefined label\n");
+                free_element(output);
+                exit(-1);
+            } 
+            BINOP_INPUT_A(elem) = LABEL_VALUE(BINOP_INPUT_A(elem));
+        }
+
+        while (TYPE(BINOP_INPUT_B(elem)) == TYPE_LABEL) {
+            if (LABEL_VALUE(BINOP_INPUT_B(elem)) == NULL) {
+                fprintf(stderr, "replace_labels crash: undefined label\n");
+                free_element(output);
+                exit(-1);
+            }
+            BINOP_INPUT_B(elem) = LABEL_VALUE(BINOP_INPUT_B(elem));
+        }
+        return;
 }
 
 void get_input_variables(char *bufp)
