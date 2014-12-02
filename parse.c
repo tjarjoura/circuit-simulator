@@ -2,12 +2,13 @@
 
 #include "proto.h"
 
-static struct not *parse_not(char *bufp, int *retpos)
+static void *parse_un(char *bufp, int *retpos, int t_flipflop)
 {
     int rv, i = 0;
     char token_buf[20];
-    void *input;
-    
+    void *input, *parsed;
+   
+    /* get input */ 
     rv = get_token(bufp + i, token_buf, 20, &i);
     if (rv == TOKEN_LEFTP) {
         if ((input = parse(bufp + i, &i)) == NULL)
@@ -18,28 +19,111 @@ static struct not *parse_not(char *bufp, int *retpos)
             input = get_label(token_buf);
 
     } else {
-        fprintf(stderr, "parse_not crash: unexpected token\n");
+        fprintf(stderr, "parse_un crash: unexpected token\n");
         return NULL;
     }
 
+    /* check for terminating right parenthesis */
     if ((rv = get_token(bufp + i, token_buf, 20, &i)) != TOKEN_RIGHTP) {
         free_element(input);    
-        fprintf(stderr, "parse_not crash: unexpected token\n");
+        fprintf(stderr, "parse_un crash: unexpected token\n");
         return NULL;
     }
+  
+    /* set up data structure */ 
+    parsed = t_flipflop ? malloc(sizeof(struct t_flipflop)) : malloc(sizeof(struct t_not));
     
-    struct not *parsed = malloc(sizeof(struct not));
-    parsed->type = TYPE_NOT;
-    parsed->input = input; 
+    TYPE(parsed) = t_flipflop? TYPE_NOT : TYPE_TFLIPFLOP;
+    UN_INPUT(parsed) = input;
+    if(t_flipflop)
+       TFLIPFLOP_STATE(parsed) = 0;
     
     *retpos += i;
     return parsed;
 }
 
-static struct binary_op *parse_or(char *bufp, int *retpos);
-static struct binary_op *parse_and(char *bufp, int *retpos);
-static struct tflipflop *parse_tflipflop(char *bufp, int *retpos);
-static void *parse_label(char *bufp, int *retpos);
+static struct binary_op *parse_bin(char *bufp, int *retpos, int type) 
+{
+    int rv, i = 0;
+    char token_buf[20];
+    void *input_a, *input_b;
+
+    /* set first input */
+    rv = get_token(bufp + i, token_buf, 20, &i); 
+    if (rv == TOKEN_LEFTP) {
+        if ((input_a = parse(bufp + i, &i)) == NULL)
+            return NULL;
+    
+    } else if (rv == TOKEN_ATOM) {
+        if ((input_a = get_input(token_buf)) == NULL)
+            input_a = get_label(token_buf);
+
+    } else {
+        fprintf(stderr, "parse_bin crash: unexpected token\n");
+        return NULL;
+    }
+   
+    /* set second input */
+    rv = get_token(bufp + i, token_buf, 20, &i); 
+    if (rv == TOKEN_LEFTP) {
+        if ((input_b = parse(bufp + i, &i)) == NULL) {
+            free_elemet(input_a);
+            return NULL;
+        }
+    } else if (rv == TOKEN_ATOM) {
+        if ((input_b = get_input(token_buf)) == NULL)
+            input_b = get_label(token_buf);
+
+    } else {
+        free_element(input_a);
+        fprintf(stderr, "parse_bin crash: unexpected token\n");
+        return NULL;
+    }
+
+    /* check for terminating right parenthesis */
+    if ((rv = get_token(bufp + i, token_buf, 20 &i)) != TOKEN_RIGHTP) {
+        free_element(input_a);
+        free_element(input_b);
+        fprintf(stderr, "parse_bin crash: unexpected token\n");
+        return NULL;
+    }
+
+    /* set up data structure */
+    parsed = malloc(sizeof(struct binary_op));
+
+    TYPE(parsed) = type;
+    BINOP_INPUT_A(parsed) = type;
+    BINOP_INPUT_B(parsed) = type;
+
+    *retpos += i;
+    return parsed;
+}
+
+static void *parse_label(char *bufp, int *retpos, char *label)
+{
+    struct label *l = get_label(label);
+    void *parsed;
+    int rv, i = 0;
+    char token_buf[20];
+    
+    rv = get_token(bufp + i, token_buf, 20, &i); 
+    if (rv == TOKEN_LEFTP) {
+        if ((parsed = parse(bufp + i, &i)) == NULL)
+            return NULL;
+    
+    } else if (rv == TOKEN_ATOM) {
+        if ((parsed = get_input(token_buf)) == NULL)
+            parsed = get_label(token_buf);
+
+    } else {
+        fprintf(stderr, "parse_bin crash: unexpected token\n");
+        return NULL;
+    }
+
+    l->value = parsed;
+    *retpos += i;
+    return parsed;
+}
 
 static int type(char *atom)
 {
@@ -77,11 +161,11 @@ void *parse(char *bufp, int *retpos)
         *retpos += i;
         return parsed;
     case TYPE_OR:
-        parsed = parse_or(bufp + i, &i);
+        parsed = parse_bin(bufp + i, &i, TYPE_OR);
         *retpos += i;
         return parsed;
     case TYPE_AND:
-        parsed = parse_and(bufp + i, &i);
+        parsed = parse_bin(bufp + i, &i, TYPE_AND);
         *retpos += i;
         return parsed;
     case TYPE_TFLIPFLOP:

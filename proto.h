@@ -9,10 +9,9 @@
 #define TYPE_LABEL     6
 
 #define KIND(p)            (((not *)p)->kind)
-#define NOT_INPUT(p)       (((not *)p)->input)
+#define UN_INPUT(p)        (((not *)p)->input)
 #define BINOP_INPUT_A(p)   (((binary_op *)p)->input_a)
 #define BINOP_INPUT_B(p)   (((binary_op *)p)->input_b)
-#define TFLIPFLOP_INPUT(p) (((tflipflop *)p)->input_a)
 #define TFLIPFLOP_STATE(p) (((tflipflop *)p)->former_state)
 #define INPUT(p)           (((input *)p)->value)
 #define INPUT_LABEL(p)     (((input *)p)->label)
@@ -26,6 +25,7 @@
 int get_token(char *bufp, char *token_buf, int n, int *retpos);
 void *parse(char *bufp, int *retpos); 
 void free_element(void *elem);
+
 struct label *get_label(char *str);
 
 struct not {
@@ -53,7 +53,7 @@ struct input {
 
 struct label {
     char kind;
-    char *label;
+    char label[10];
     void *value;
 };
 
