@@ -1,6 +1,6 @@
 CFLAGS = -Wall -Werror -g
 
-all: main.c tokens.c
-	gcc $(CFLAGS) -o circuits main.c tokens.c 
+all: evaluate.c inputs.c label.c main.c parse.c tokens.c
+	gcc $(CFLAGS) -o circuits evaluate.c inputs.c label.c main.c parse.c tokens.c
 clean:
 	rm -f *.o circuits
