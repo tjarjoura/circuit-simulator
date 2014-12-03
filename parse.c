@@ -78,7 +78,7 @@ static struct binary_op *parse_bin(char *bufp, int *retpos, int type)
 
     } else {
         free_element(input_a);
-        fprintf(stderr, "parse_bin crash: unexpected token\n");
+        fprintf(stderr, "parse_bin crash: unexpected token: %s, type=%d\n", token_buf, type);
         return NULL;
     }
 
@@ -118,7 +118,13 @@ static void *parse_label(char *bufp, int *retpos, char *label)
             parsed = get_label(token_buf);
 
     } else {
-        fprintf(stderr, "parse_bin crash: unexpected token\n");
+        fprintf(stderr, "parse_label crash: unexpected token\n");
+        return NULL;
+    }
+
+    if ((rv = get_token(bufp + i, token_buf, 20, &i)) != TOKEN_RIGHTP) {
+        fprintf(stderr, "parse_label crash: expected terminating ')'\n");
+        free_element(parsed);
         return NULL;
     }
 

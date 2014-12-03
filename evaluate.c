@@ -4,7 +4,7 @@
 #include "proto.h"
 
 char evaluate(void *circuit)
-
+{
     switch (TYPE(circuit)) {
     case TYPE_NOT:
         return !(evaluate(UN_INPUT(circuit)));

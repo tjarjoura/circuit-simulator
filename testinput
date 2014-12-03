@@ -1,0 +1,4 @@
+p q r
+(and (tflipflop mylabel) (or (mylabel (not p))  (and q r)))
+0 1 0
+0 1 1
